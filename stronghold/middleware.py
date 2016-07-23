@@ -16,9 +16,14 @@ class LoginRequiredMiddleware(object):
     """
 
     def __init__(self, *args, **kwargs):
+        if args:
+            # Django 1.10 and up
+            self.get_response = args[0]
+
         self.public_view_urls = getattr(conf, 'STRONGHOLD_PUBLIC_URLS', ())
 
     def process_view(self, request, view_func, view_args, view_kwargs):
+        print('Processing view.')
         if conf.STRONGHOLD_USER_TEST_FUNC(request.user) \
                 or utils.is_view_func_public(view_func) \
                 or self.is_public_url(request.path_info):
@@ -29,3 +34,7 @@ class LoginRequiredMiddleware(object):
 
     def is_public_url(self, url):
         return any(public_url.match(url) for public_url in self.public_view_urls)
+
+    def __call__(self, request):
+        # Django 1.10 and up
+        return self.get_response(request)
